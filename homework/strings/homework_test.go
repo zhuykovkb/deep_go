@@ -23,6 +23,7 @@ func NewCOWBuffer(data []byte) COWBuffer {
 }
 
 func (b *COWBuffer) Clone() COWBuffer {
+	*b.refs++
 	return COWBuffer{
 		data: b.data,
 		refs: b.refs,
@@ -34,11 +35,11 @@ func (b *COWBuffer) Close() {
 }
 
 func (b *COWBuffer) Update(index int, value byte) bool {
-	if !(index >= 0 && index < len(b.data)) {
+	if index < 0 || index > len(b.data)-1 {
 		return false
 	}
 
-	if *b.refs > 0 {
+	if *b.refs > 1 {
 		b.data = append([]byte(nil), b.data...)
 		*b.refs--
 	}
