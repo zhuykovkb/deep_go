@@ -10,31 +10,131 @@ import (
 // go test -v homework_test.go
 
 type OrderedMap struct {
-	// need to implement
+	left, right *OrderedMap
+	key         *int
+	value       int
 }
 
 func NewOrderedMap() OrderedMap {
 	return OrderedMap{} // need to implement
 }
 
-func (m *OrderedMap) Insert(key, value int) {
-	// need to implement
+func (m *OrderedMap) Insert(key int, value int) {
+	if m.key == nil {
+		m.key = &key
+		m.value = value
+	} else if *m.key == key {
+		m.value = value
+	} else if *m.key > key {
+		if m.left == nil {
+			m.left = &OrderedMap{
+				left:  nil,
+				right: nil,
+				key:   &key,
+				value: value,
+			}
+		} else {
+			m.left.Insert(key, value)
+		}
+	} else {
+		if m.right == nil {
+			m.right = &OrderedMap{
+				left:  nil,
+				right: nil,
+				key:   &key,
+				value: value,
+			}
+		} else {
+			m.right.Insert(key, value)
+		}
+	}
 }
 
 func (m *OrderedMap) Erase(key int) {
-	// need to implement
+	if m.key == nil {
+		return
+	}
+
+	if *m.key == key {
+		//TODO
+		panic("test")
+
+	}
+
+	if key > *m.key && m.right != nil {
+		if *m.right.key == key {
+			if m.right.left != nil {
+				m.right = m.right.left
+			} else if m.right.right != nil {
+				m.right = m.right.right
+			} else {
+				m.right = nil
+			}
+		} else {
+			m.right.Erase(key)
+		}
+	} else if key < *m.key && m.left != nil {
+		if *m.left.key == key {
+			if m.left.left != nil {
+				m.left = m.left.left
+			} else if m.left.right != nil {
+				m.left = m.left.right
+			} else {
+				m.left = nil
+			}
+
+		} else {
+			m.left.Erase(key)
+		}
+
+	}
+
 }
 
 func (m *OrderedMap) Contains(key int) bool {
-	return false // need to implement
+	if m.key == nil {
+		return false
+	} else if *m.key == key {
+		return true
+	} else if *m.key > key {
+		if m.left == nil {
+			return false
+		}
+		return m.left.Contains(key)
+	} else if *m.key < key {
+		if m.right == nil {
+			return false
+		}
+		return m.right.Contains(key)
+	} else {
+		return *m.key == key
+	}
 }
 
 func (m *OrderedMap) Size() int {
-	return 0 // need to implement
+	size := 0
+	if m.left != nil {
+		size += m.left.Size()
+	}
+	if m.right != nil {
+		size += m.right.Size()
+	}
+	if m.key != nil {
+		size++
+	}
+	return size
 }
 
 func (m *OrderedMap) ForEach(action func(int, int)) {
-	// need to implement
+	if m.left != nil {
+		m.left.ForEach(action)
+	}
+
+	action(*m.key, m.value)
+
+	if m.right != nil {
+		m.right.ForEach(action)
+	}
 }
 
 func TestCircularQueue(t *testing.T) {
