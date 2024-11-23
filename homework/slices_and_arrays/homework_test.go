@@ -19,8 +19,8 @@ type CircularQueue struct {
 func NewCircularQueue(size int) CircularQueue {
 	return CircularQueue{
 		values: make([]int, size),
-		front:  -1,
-		rear:   -1,
+		front:  0,
+		rear:   0,
 		size:   0,
 	}
 }
@@ -30,12 +30,11 @@ func (q *CircularQueue) Push(value int) bool {
 		return false
 	}
 
-	if q.Empty() {
-		q.front++
+	if !q.Empty() {
+		q.rear = (q.rear + 1) % cap(q.values)
 	}
 
 	q.size++
-	q.rear = (q.rear + 1) % cap(q.values)
 	q.values[q.rear] = value
 
 	return true
