@@ -9,132 +9,133 @@ import (
 
 // go test -v homework_test.go
 
-type OrderedMap struct {
-	left, right *OrderedMap
-	key         *int
+type Node struct {
+	left, right *Node
+	key         int
 	value       int
 }
 
+type OrderedMap struct {
+	rootNode *Node
+	size     int
+}
+
 func NewOrderedMap() OrderedMap {
-	return OrderedMap{} // need to implement
+	return OrderedMap{
+		rootNode: nil,
+		size:     0,
+	}
 }
 
 func (m *OrderedMap) Insert(key int, value int) {
-	if m.key == nil {
-		m.key = &key
-		m.value = value
-	} else if *m.key == key {
-		m.value = value
-	} else if *m.key > key {
-		if m.left == nil {
-			m.left = &OrderedMap{
-				left:  nil,
-				right: nil,
-				key:   &key,
-				value: value,
-			}
-		} else {
-			m.left.Insert(key, value)
-		}
+	n := &Node{
+		left:  nil,
+		right: nil,
+		key:   key,
+		value: value,
+	}
+
+	if m.rootNode == nil {
+		m.rootNode = n
+		m.size++
+		return
+	}
+
+	if key > m.rootNode.key {
+		m.rootNode.right = insertIntoBst(m.rootNode.right, key, value)
 	} else {
-		if m.right == nil {
-			m.right = &OrderedMap{
-				left:  nil,
-				right: nil,
-				key:   &key,
-				value: value,
-			}
-		} else {
-			m.right.Insert(key, value)
-		}
+		m.rootNode.left = insertIntoBst(m.rootNode.left, key, value)
+	}
+	m.size++
+
+}
+
+func insertIntoBst(n *Node, key int, value int) *Node {
+	if n == nil {
+		return newNode(key, value)
+	}
+
+	if key < n.key {
+		n.left = insertIntoBst(n.left, key, value)
+	} else {
+		n.right = insertIntoBst(n.right, key, value)
+	}
+
+	return n
+}
+
+func newNode(key int, value int) *Node {
+	return &Node{
+		left:  nil,
+		right: nil,
+		key:   key,
+		value: value,
 	}
 }
 
 func (m *OrderedMap) Erase(key int) {
-	if m.key == nil {
+
+	if m.rootNode == nil {
 		return
 	}
 
-	if *m.key == key {
-		//TODO
-		panic("test")
-
+	if key < m.rootNode.key {
+		m.rootNode.left = eraseNode(m.rootNode.left, key)
+	} else {
+		m.rootNode.right = eraseNode(m.rootNode.left, key)
 	}
 
-	if key > *m.key && m.right != nil {
-		if *m.right.key == key {
-			if m.right.left != nil {
-				m.right = m.right.left
-			} else if m.right.right != nil {
-				m.right = m.right.right
-			} else {
-				m.right = nil
-			}
-		} else {
-			m.right.Erase(key)
-		}
-	} else if key < *m.key && m.left != nil {
-		if *m.left.key == key {
-			if m.left.left != nil {
-				m.left = m.left.left
-			} else if m.left.right != nil {
-				m.left = m.left.right
-			} else {
-				m.left = nil
-			}
+}
 
-		} else {
-			m.left.Erase(key)
-		}
-
+func eraseNode(n *Node, key int) *Node {
+	if n == nil {
+		return nil
 	}
 
+	if key < n.key {
+		n.left = eraseNode(n.left, key)
+	} else if key > n.key {
+		n.right = eraseNode(n.right, key)
+	}
+
+	return nil
 }
 
 func (m *OrderedMap) Contains(key int) bool {
-	if m.key == nil {
-		return false
-	} else if *m.key == key {
-		return true
-	} else if *m.key > key {
-		if m.left == nil {
-			return false
-		}
-		return m.left.Contains(key)
-	} else if *m.key < key {
-		if m.right == nil {
-			return false
-		}
-		return m.right.Contains(key)
-	} else {
-		return *m.key == key
-	}
+	return false
+	//if m.key == nil {
+	//	return false
+	//} else if *m.key == key {
+	//	return true
+	//} else if *m.key > key {
+	//	if m.left == nil {
+	//		return false
+	//	}
+	//	return m.left.Contains(key)
+	//} else if *m.key < key {
+	//	if m.right == nil {
+	//		return false
+	//	}
+	//	return m.right.Contains(key)
+	//} else {
+	//	return *m.key == key
+	//}
 }
 
 func (m *OrderedMap) Size() int {
-	size := 0
-	if m.left != nil {
-		size += m.left.Size()
-	}
-	if m.right != nil {
-		size += m.right.Size()
-	}
-	if m.key != nil {
-		size++
-	}
-	return size
+	return m.size
 }
 
 func (m *OrderedMap) ForEach(action func(int, int)) {
-	if m.left != nil {
-		m.left.ForEach(action)
-	}
-
-	action(*m.key, m.value)
-
-	if m.right != nil {
-		m.right.ForEach(action)
-	}
+	//if m.left != nil {
+	//	m.left.ForEach(action)
+	//}
+	//
+	//action(*m.key, m.value)
+	//
+	//if m.right != nil {
+	//	m.right.ForEach(action)
+	//}
 }
 
 func TestCircularQueue(t *testing.T) {
