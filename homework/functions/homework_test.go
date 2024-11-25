@@ -25,7 +25,7 @@ func Filter(data []int, action func(int) bool) []int {
 		return data
 	}
 
-	r := make([]int, 0, len(data))
+	var r []int
 	for _, v := range data {
 		if action(v) {
 			r = append(r, v)
