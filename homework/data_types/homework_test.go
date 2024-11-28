@@ -11,7 +11,7 @@ func ToLittleEndian(number uint32) uint32 {
 	return uint32(byte(number))<<24 | uint32(byte(number>>8))<<16 | uint32(byte(number>>16))<<8 | uint32(byte(number>>24))
 }
 
-func TestSerializationProperties(t *testing.T) {
+func TestСonversion(t *testing.T) {
 	tests := map[string]struct {
 		number uint32
 		result uint32
