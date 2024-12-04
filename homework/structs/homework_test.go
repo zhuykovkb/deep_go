@@ -11,80 +11,146 @@ import (
 type Option func(*GamePerson)
 
 func WithName(name string) func(*GamePerson) {
-	return func(person *GamePerson) {
-		// need to implement
+	if len(name) > 42 {
+		panic("name is too long")
 	}
+
+	return func(person *GamePerson) {
+		for i, c := range name {
+			person.name[i] = encodeChar(c)
+		}
+	}
+}
+
+func encodeChar(c rune) uint8 {
+	if c >= 'a' && c <= 'z' {
+		return uint8(c-'a') + 0
+	} else if c >= 'A' && c <= 'Z' {
+		return uint8(c-'A') + 26
+	} else if c >= '0' && c <= '9' {
+		return uint8(c-'0') + 52
+	} else if c == '_' {
+		return 62
+	}
+	panic("invalid char")
+}
+
+func decodeChar(c uint8) rune {
+	if c < 26 {
+		return rune('a' + c)
+	} else if c < 52 {
+		return rune('A' + c)
+	} else if c < 62 {
+		return rune(0 + c)
+	} else if c == 62 {
+		return '_'
+	}
+	panic("invalid char")
 }
 
 func WithCoordinates(x, y, z int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		person.x = int32(x)
+		person.y = int32(y)
+		person.z = int32(z)
 	}
 }
 
 func WithGold(gold int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		if gold < 0 || gold > 0x7FFFFFFF {
+			panic("gold more than 31 bits can manage")
+		}
+		person.goldAndHome = (person.goldAndHome & 0x80000000) | uint32(gold&0x7FFFFFFF)
 	}
 }
 
 func WithMana(mana int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		if mana < 0 || mana > 1000 {
+			panic("mana out of range")
+		}
+		person.data &= ^uint32(0x3FF)
+		person.data |= uint32(mana & 0x3FF)
+
 	}
 }
 
 func WithHealth(health int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		if health < 0 || health > 1000 {
+			panic("health out of range")
+		}
+		person.data &= ^uint32(0x3FF << 15)
+		person.data |= uint32(health&0x3FF) << 15
 	}
 }
 
 func WithRespect(respect int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		if respect < 0 || respect > 10 {
+			panic("respect out of range")
+		}
+		person.respect &= ^uint8(0xF)
+		person.respect |= uint8(respect & 0xF)
 	}
 }
 
 func WithStrength(strength int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		if strength < 0 || strength > 10 {
+			panic("strength out of range")
+		}
+		person.data &= ^uint32(0xF << 10)
+		person.data |= uint32(strength&0xF) << 10
 	}
 }
 
 func WithExperience(experience int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		if experience < 0 || experience > 10 {
+			panic("experience out of range")
+		}
+		person.data &= ^uint32(0xF << 25)
+		person.data |= uint32(experience&0xF) << 25
 	}
 }
 
 func WithLevel(level int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		if level < 0 || level > 10 {
+			panic("level out of range")
+		}
+		person.level &= ^uint8(0xF)
+		person.level |= uint8(level & 0xF)
 	}
 }
 
 func WithHouse() func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		person.goldAndHome |= 1 << 31
 	}
 }
 
 func WithGun() func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		person.data |= 1 << 14
 	}
 }
 
 func WithFamily() func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		person.data |= 1 << 29
 	}
 }
 
 func WithType(personType int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		// need to implement
+		if personType < 0 || personType > 3 {
+			panic("personType out of range")
+		}
+		person.data &= ^uint32(0x3 << 30)
+		person.data |= uint32(personType&0x3) << 30
 	}
 }
 
@@ -95,87 +161,84 @@ const (
 )
 
 type GamePerson struct {
-	// need to implement
+	x, y, z     int32     //12
+	goldAndHome uint32    //4
+	name        [42]uint8 //42
+	level       uint8     //1
+	respect     uint8     //1
+	data        uint32    //4
 }
 
 func NewGamePerson(options ...Option) GamePerson {
-	// need to implement
-	return GamePerson{}
+	person := GamePerson{}
+	for _, option := range options {
+		option(&person)
+	}
+	return person
 }
 
 func (p *GamePerson) Name() string {
-	// need to implement
-	return ""
+	var name [42]rune
+	for i, c := range p.name {
+		name[i] = decodeChar(c)
+	}
+	return string(name[:])
 }
 
 func (p *GamePerson) X() int {
-	// need to implement
-	return 0
+	return int(p.x)
 }
 
 func (p *GamePerson) Y() int {
-	// need to implement
-	return 0
+	return int(p.y)
 }
 
 func (p *GamePerson) Z() int {
-	// need to implement
-	return 0
+	return int(p.z)
 }
 
 func (p *GamePerson) Gold() int {
-	// need to implement
-	return 0
+	return int(p.goldAndHome & 0x7FFFFFFF)
 }
 
 func (p *GamePerson) Mana() int {
-	// need to implement
-	return 0
+	return int(p.data & 0x3FF)
 }
 
 func (p *GamePerson) Health() int {
-	// need to implement
-	return 0
+	return int((p.data >> 15) & 0x3FF)
 }
 
 func (p *GamePerson) Respect() int {
-	// need to implement
-	return 0
+	return int(p.respect & 0xF)
 }
 
 func (p *GamePerson) Strength() int {
-	// need to implement
-	return 0
+	return int((p.data >> 10) & 0xF)
 }
 
 func (p *GamePerson) Experience() int {
-	// need to implement
-	return 0
+	return int((p.data >> 25) & 0xF)
 }
 
 func (p *GamePerson) Level() int {
-	// need to implement
-	return 0
+	return int(p.level & 0xF)
 }
 
 func (p *GamePerson) HasHouse() bool {
-	// need to implement
-	return false
+	return (p.goldAndHome>>31)&1 == 1
 }
 
 func (p *GamePerson) HasGun() bool {
-	// need to implement
-	return false
+	return (p.data>>14)&1 == 1
 }
 
 func (p *GamePerson) HasFamilty() bool {
-	// need to implement
-	return false
+	return (p.data>>29)&1 == 1
 }
 
 func (p *GamePerson) Type() int {
-	// need to implement
-	return 0
+	return int((p.data >> 30) & 0x3)
 }
 
 func TestGamePerson(t *testing.T) {
