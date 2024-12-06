@@ -157,12 +157,22 @@ const (
 )
 
 type GamePerson struct {
-	x, y, z     int32     //12
-	goldAndHome uint32    //4
-	name        [42]uint8 //42
-	level       uint8     //1
-	respect     uint8     //1
-	data        uint32    //4
+	x, y, z     int32     //12 байт
+	goldAndHome uint32    //4 байта
+	name        [42]uint8 //42 байт
+	level       uint8     //1 байт
+	respect     uint8     //1 байт
+	data        uint32    //4 байта - характеристики персонажа:
+	/*
+		Биты:
+		0–9:   Мана (10 бит, значения от 0 до 1000)
+		10–13: Сила (4 бита, значения от 0 до 10)
+		14:    Есть ли оружие (1 бит, true/false)
+		15–24: Здоровье (10 бит, значения от 0 до 1000)
+		25–28: Опыт (4 бита, значения от 0 до 10)
+		29:    Есть ли семья (1 бит, true/false)
+		30–31: Тип игрока (2 бита, значения: 0 - строитель, 1 - кузнец, 2 - воин)
+	*/
 }
 
 func NewGamePerson(options ...Option) GamePerson {
