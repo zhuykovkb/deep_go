@@ -8,6 +8,29 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	// Маски и смещения для поля data
+	DataManaMask        = 0x3FF // 10 бит для маны
+	DataStrengthMask    = 0xF   // 4 бита для силы
+	DataStrengthShift   = 10
+	DataWeaponBit       = 14    // 1 бит для оружия
+	DataHealthMask      = 0x3FF // 10 бит для здоровья
+	DataHealthShift     = 15
+	DataExperienceMask  = 0xF // 4 бита для опыта
+	DataExperienceShift = 25
+	DataFamilyBit       = 29  // 1 бит для семьи
+	DataTypeMask        = 0x3 // 2 бита для типа игрока
+	DataTypeShift       = 30
+
+	// Маски и смещения для goldAndHome
+	GoldMask = 0x7FFFFFFF // 31 бит для золота
+	HomeBit  = 31         // 1 бит для дома
+
+	// Маски для level и respect
+	LevelMask   = 0xF // 4 бита для уровня
+	RespectMask = 0xF // 4 бита для уважения
+)
+
 type Option func(*GamePerson)
 
 func WithName(name string) func(*GamePerson) {
@@ -17,35 +40,9 @@ func WithName(name string) func(*GamePerson) {
 
 	return func(person *GamePerson) {
 		for i, c := range name {
-			person.name[i] = encodeChar(c)
+			person.name[i] = uint8(c)
 		}
 	}
-}
-
-func encodeChar(c rune) uint8 {
-	if c >= 'a' && c <= 'z' {
-		return uint8(c-'a') + 0
-	} else if c >= 'A' && c <= 'Z' {
-		return uint8(c-'A') + 26
-	} else if c >= '0' && c <= '9' {
-		return uint8(c-'0') + 52
-	} else if c == '_' {
-		return 62
-	}
-	panic("invalid char")
-}
-
-func decodeChar(c uint8) rune {
-	if c < 26 {
-		return rune('a' + c)
-	} else if c < 52 {
-		return rune('A' + c)
-	} else if c < 62 {
-		return rune(0 + c)
-	} else if c == 62 {
-		return '_'
-	}
-	panic("invalid char")
 }
 
 func WithCoordinates(x, y, z int) func(*GamePerson) {
@@ -58,10 +55,10 @@ func WithCoordinates(x, y, z int) func(*GamePerson) {
 
 func WithGold(gold int) func(*GamePerson) {
 	return func(person *GamePerson) {
-		if gold < 0 || gold > 0x7FFFFFFF {
-			panic("gold more than 31 bits can manage")
+		if gold < 0 || gold > GoldMask {
+			panic("gold out of range")
 		}
-		person.goldAndHome = (person.goldAndHome & 0x80000000) | uint32(gold&0x7FFFFFFF)
+		person.goldAndHome = (person.goldAndHome & ^uint32(GoldMask)) | uint32(gold&GoldMask)
 	}
 }
 
@@ -70,9 +67,8 @@ func WithMana(mana int) func(*GamePerson) {
 		if mana < 0 || mana > 1000 {
 			panic("mana out of range")
 		}
-		person.data &= ^uint32(0x3FF)
-		person.data |= uint32(mana & 0x3FF)
-
+		person.data &= ^uint32(DataManaMask)
+		person.data |= uint32(mana & DataManaMask)
 	}
 }
 
@@ -81,8 +77,8 @@ func WithHealth(health int) func(*GamePerson) {
 		if health < 0 || health > 1000 {
 			panic("health out of range")
 		}
-		person.data &= ^uint32(0x3FF << 15)
-		person.data |= uint32(health&0x3FF) << 15
+		person.data &= ^uint32(DataHealthMask << DataHealthShift)
+		person.data |= uint32(health&DataHealthMask) << DataHealthShift
 	}
 }
 
@@ -91,8 +87,8 @@ func WithRespect(respect int) func(*GamePerson) {
 		if respect < 0 || respect > 10 {
 			panic("respect out of range")
 		}
-		person.respect &= ^uint8(0xF)
-		person.respect |= uint8(respect & 0xF)
+		person.respect &= ^uint8(RespectMask)
+		person.respect |= uint8(respect & RespectMask)
 	}
 }
 
@@ -101,8 +97,8 @@ func WithStrength(strength int) func(*GamePerson) {
 		if strength < 0 || strength > 10 {
 			panic("strength out of range")
 		}
-		person.data &= ^uint32(0xF << 10)
-		person.data |= uint32(strength&0xF) << 10
+		person.data &= ^uint32(DataStrengthMask << DataStrengthShift)
+		person.data |= uint32(strength&DataStrengthMask) << DataStrengthShift
 	}
 }
 
@@ -111,8 +107,8 @@ func WithExperience(experience int) func(*GamePerson) {
 		if experience < 0 || experience > 10 {
 			panic("experience out of range")
 		}
-		person.data &= ^uint32(0xF << 25)
-		person.data |= uint32(experience&0xF) << 25
+		person.data &= ^uint32(DataExperienceMask << DataExperienceShift)
+		person.data |= uint32(experience&DataExperienceMask) << DataExperienceShift
 	}
 }
 
@@ -121,26 +117,26 @@ func WithLevel(level int) func(*GamePerson) {
 		if level < 0 || level > 10 {
 			panic("level out of range")
 		}
-		person.level &= ^uint8(0xF)
-		person.level |= uint8(level & 0xF)
+		person.level &= ^uint8(LevelMask)
+		person.level |= uint8(level & LevelMask)
 	}
 }
 
 func WithHouse() func(*GamePerson) {
 	return func(person *GamePerson) {
-		person.goldAndHome |= 1 << 31
+		person.goldAndHome |= 1 << HomeBit
 	}
 }
 
 func WithGun() func(*GamePerson) {
 	return func(person *GamePerson) {
-		person.data |= 1 << 14
+		person.data |= 1 << DataWeaponBit
 	}
 }
 
 func WithFamily() func(*GamePerson) {
 	return func(person *GamePerson) {
-		person.data |= 1 << 29
+		person.data |= 1 << DataFamilyBit
 	}
 }
 
@@ -149,8 +145,8 @@ func WithType(personType int) func(*GamePerson) {
 		if personType < 0 || personType > 3 {
 			panic("personType out of range")
 		}
-		person.data &= ^uint32(0x3 << 30)
-		person.data |= uint32(personType&0x3) << 30
+		person.data &= ^uint32(DataTypeMask << DataTypeShift)
+		person.data |= uint32(personType&DataTypeMask) << DataTypeShift
 	}
 }
 
@@ -178,11 +174,7 @@ func NewGamePerson(options ...Option) GamePerson {
 }
 
 func (p *GamePerson) Name() string {
-	var name [42]rune
-	for i, c := range p.name {
-		name[i] = decodeChar(c)
-	}
-	return string(name[:])
+	return string(p.name[:])
 }
 
 func (p *GamePerson) X() int {
@@ -198,47 +190,47 @@ func (p *GamePerson) Z() int {
 }
 
 func (p *GamePerson) Gold() int {
-	return int(p.goldAndHome & 0x7FFFFFFF)
+	return int(p.goldAndHome & GoldMask)
 }
 
 func (p *GamePerson) Mana() int {
-	return int(p.data & 0x3FF)
+	return int(p.data & DataManaMask)
 }
 
 func (p *GamePerson) Health() int {
-	return int((p.data >> 15) & 0x3FF)
+	return int((p.data >> DataHealthShift) & DataHealthMask)
 }
 
 func (p *GamePerson) Respect() int {
-	return int(p.respect & 0xF)
+	return int(p.respect & RespectMask)
 }
 
 func (p *GamePerson) Strength() int {
-	return int((p.data >> 10) & 0xF)
+	return int((p.data >> DataStrengthShift) & DataStrengthMask)
 }
 
 func (p *GamePerson) Experience() int {
-	return int((p.data >> 25) & 0xF)
+	return int((p.data >> DataExperienceShift) & DataExperienceMask)
 }
 
 func (p *GamePerson) Level() int {
-	return int(p.level & 0xF)
+	return int(p.level & LevelMask)
 }
 
 func (p *GamePerson) HasHouse() bool {
-	return (p.goldAndHome>>31)&1 == 1
+	return (p.goldAndHome>>HomeBit)&1 == 1
 }
 
 func (p *GamePerson) HasGun() bool {
-	return (p.data>>14)&1 == 1
+	return (p.data>>DataWeaponBit)&1 == 1
 }
 
 func (p *GamePerson) HasFamilty() bool {
-	return (p.data>>29)&1 == 1
+	return (p.data>>DataFamilyBit)&1 == 1
 }
 
 func (p *GamePerson) Type() int {
-	return int((p.data >> 30) & 0x3)
+	return int((p.data >> DataTypeShift) & DataTypeMask)
 }
 
 func TestGamePerson(t *testing.T) {
