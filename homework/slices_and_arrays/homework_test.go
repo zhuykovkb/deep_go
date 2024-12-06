@@ -30,12 +30,9 @@ func (q *CircularQueue) Push(value int) bool {
 		return false
 	}
 
-	if !q.Empty() {
-		q.rear = (q.rear + 1) % cap(q.values)
-	}
-
-	q.size++
 	q.values[q.rear] = value
+	q.rear = (q.rear + 1) % cap(q.values)
+	q.size++
 
 	return true
 }
@@ -45,8 +42,8 @@ func (q *CircularQueue) Pop() bool {
 		return false
 	}
 
-	q.size--
 	q.front = (q.front + 1) % cap(q.values)
+	q.size--
 
 	return true
 }
@@ -64,7 +61,7 @@ func (q *CircularQueue) Back() int {
 		return -1
 	}
 
-	return q.values[q.rear]
+	return q.values[(q.rear+q.size-1)%cap(q.values)]
 }
 
 func (q *CircularQueue) Empty() bool {
