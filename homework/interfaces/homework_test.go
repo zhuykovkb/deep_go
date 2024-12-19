@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,21 +20,46 @@ type MessageService struct {
 }
 
 type Container struct {
-	// need to implement
+	constructors map[string]interface{}
 }
 
 func NewContainer() *Container {
-	// need to implement
-	return &Container{}
+	return &Container{
+		constructors: make(map[string]interface{}),
+	}
 }
 
 func (c *Container) RegisterType(name string, constructor interface{}) {
-	// need to implement
+	if len(name) == 0 {
+		panic("Empty name")
+	}
+
+	cType := reflect.TypeOf(constructor)
+	if cType == nil || cType.Kind() != reflect.Func {
+		panic("constructor must be a function")
+	}
+
+	c.constructors[name] = constructor
 }
 
 func (c *Container) Resolve(name string) (interface{}, error) {
-	// need to implement
-	return nil, nil
+	constructor, ok := c.constructors[name]
+	if !ok {
+		return nil, fmt.Errorf("constructor %s not found", name)
+	}
+
+	var args []reflect.Value
+	var err error
+
+	cValue := reflect.ValueOf(constructor)
+	result := cValue.Call(args)
+	obj := result[0].Interface()
+
+	if len(result) > 1 {
+		err, _ = result[1].Interface().(error)
+	}
+
+	return obj, err
 }
 
 func TestDIContainer(t *testing.T) {
