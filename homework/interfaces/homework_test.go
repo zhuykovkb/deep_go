@@ -48,18 +48,7 @@ func (c *Container) Resolve(name string) (interface{}, error) {
 		return nil, fmt.Errorf("constructor %s not found", name)
 	}
 
-	var args []reflect.Value
-	var err error
-
-	cValue := reflect.ValueOf(constructor)
-	result := cValue.Call(args)
-	obj := result[0].Interface()
-
-	if len(result) > 1 {
-		err, _ = result[1].Interface().(error)
-	}
-
-	return obj, err
+	return reflect.ValueOf(constructor).Call(nil)[0].Interface(), nil
 }
 
 func TestDIContainer(t *testing.T) {
