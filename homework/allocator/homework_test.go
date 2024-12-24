@@ -11,16 +11,21 @@ import (
 // go test -v homework_test.go
 
 func Defragment(memory []byte, pointers []unsafe.Pointer) {
-	fIndex := 0
+	mapPointers := make(map[unsafe.Pointer]struct{})
+	for _, pointer := range pointers {
+		mapPointers[pointer] = struct{}{}
+	}
+
+	freeIndex := 0
 	for i := 0; i < len(memory); i++ {
 		oldPointer := unsafe.Pointer(&memory[i])
 
-		if !existInMemory(oldPointer, pointers) {
+		if _, ok := mapPointers[oldPointer]; !ok {
 			continue
 		}
 
-		memory[fIndex] = memory[i]
-		newPointer := unsafe.Pointer(&memory[fIndex])
+		memory[freeIndex] = memory[i]
+		newPointer := unsafe.Pointer(&memory[freeIndex])
 
 		for j := 0; j < len(pointers); j++ {
 			if pointers[j] == oldPointer {
@@ -28,21 +33,12 @@ func Defragment(memory []byte, pointers []unsafe.Pointer) {
 			}
 		}
 
-		fIndex++
+		freeIndex++
 	}
 
-	for i := fIndex; i < len(memory); i++ {
+	for i := freeIndex; i < len(memory); i++ {
 		memory[i] = 0x00
 	}
-}
-
-func existInMemory(pointer unsafe.Pointer, pointers []unsafe.Pointer) bool {
-	for _, v := range pointers {
-		if pointer == v {
-			return true
-		}
-	}
-	return false
 }
 
 func TestDefragmentation(t *testing.T) {
