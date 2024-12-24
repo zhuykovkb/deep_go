@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,8 +19,41 @@ type Person struct {
 }
 
 func Serialize(person Person) string {
-	// need to implement
-	return ""
+	t := reflect.TypeOf(person)
+	v := reflect.ValueOf(person)
+
+	var b strings.Builder
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		value := v.FieldByName(field.Name)
+		prop := field.Tag.Get("properties")
+
+		if emptyValue(value) && strings.Contains(prop, "omitempty") {
+			continue
+		}
+
+		if len(b.String()) != 0 {
+			b.WriteString("\n")
+		}
+
+		name := strings.Split(prop, ",")[0]
+		b.WriteString(fmt.Sprintf("%v=%v", name, value.Interface()))
+	}
+
+	return b.String()
+}
+
+func emptyValue(value reflect.Value) bool {
+	switch value.Kind() {
+	case reflect.String:
+		return value.String() == ""
+	case reflect.Bool:
+		return value.Bool() == false
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return value.Int() == 0
+	default:
+		return false
+	}
 }
 
 func TestSerialization(t *testing.T) {
