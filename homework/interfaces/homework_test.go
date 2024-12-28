@@ -29,17 +29,19 @@ func NewContainer() *Container {
 	}
 }
 
-func (c *Container) RegisterType(name string, constructor interface{}) {
+func (c *Container) RegisterType(name string, constructor interface{}) error {
 	if len(name) == 0 {
-		panic("Empty name")
+		return fmt.Errorf("empty name")
 	}
 
 	cType := reflect.TypeOf(constructor)
 	if cType == nil || cType.Kind() != reflect.Func {
-		panic("constructor must be a function")
+
+		return fmt.Errorf("constructor must be a function")
 	}
 
 	c.constructors[name] = constructor
+	return nil
 }
 
 func (c *Container) Resolve(name string) (interface{}, error) {
