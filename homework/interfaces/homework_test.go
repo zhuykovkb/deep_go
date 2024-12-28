@@ -36,7 +36,6 @@ func (c *Container) RegisterType(name string, constructor interface{}) error {
 
 	cType := reflect.TypeOf(constructor)
 	if cType == nil || cType.Kind() != reflect.Func {
-
 		return fmt.Errorf("constructor must be a function")
 	}
 
