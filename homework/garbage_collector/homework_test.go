@@ -9,10 +9,43 @@ import (
 )
 
 // go test -v homework_test.go
+var EmptyPointer uintptr = 0x00
 
 func Trace(stacks [][]uintptr) []uintptr {
-	// need to implement
-	return nil
+	traced := make(map[uintptr]struct{})
+
+	for _, stack := range stacks {
+		for _, p := range stack {
+			trace(p, traced)
+		}
+	}
+
+	var result []uintptr
+	for ptr := range traced {
+		result = append(result, ptr)
+	}
+
+	return result
+
+}
+
+func trace(pc uintptr, traced map[uintptr]struct{}) {
+	if pc == EmptyPointer || visited(pc, traced) {
+		return
+	}
+
+	traced[pc] = struct{}{}
+
+	next := *(*uintptr)(unsafe.Pointer(pc))
+	if next != EmptyPointer {
+		trace(next, traced)
+	}
+
+}
+
+func visited(pc uintptr, traced map[uintptr]struct{}) bool {
+	_, ok := traced[pc]
+	return ok
 }
 
 func TestTrace(t *testing.T) {
